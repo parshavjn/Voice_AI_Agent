@@ -279,9 +279,8 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
 
       // 1. Authenticate and obtain short-lived session token
       const tokenResponse = await fetch('https://api.murf.ai/v1/auth/token', {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'api-key': murfApiKey,
         }
       });

@@ -23,6 +23,7 @@ export default function App() {
   const [selectedVoice] = useState<'Samar'>('Samar');
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isMockResponse, setIsMockResponse] = useState(false);
+  const [apiWarning, setApiWarning] = useState<string | null>(null);
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [murfApiKey, setMurfApiKey] = useState(() => localStorage.getItem('murf_api_key') || '');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -52,6 +53,7 @@ export default function App() {
     setWriteup('');
     setAudioError(null);
     setIsListening(false);
+    setApiWarning(null);
     
     if (audioRef.current) {
       audioRef.current.pause();
@@ -78,6 +80,7 @@ export default function App() {
       const data = await response.json();
       setWriteup(data.writeup);
       setIsMockResponse(!!data.isMock);
+      setApiWarning(data.apiError || null);
       
       // Save to recent list
       setRecentGenerations(prev => [
@@ -456,7 +459,15 @@ export default function App() {
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-start gap-2 mt-4">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold">Offline Mock Notice:</span> Your Gemini API Key is waiting to be configured in your Secrets panel. We have simulated Parshav's exact voice utilizing pre-built heuristics for you.
+                        {apiWarning ? (
+                          <>
+                            <span className="font-bold">API Overload Fallback:</span> The Gemini API is currently unavailable ({apiWarning}). We have safely fell back to a locally simulated draft matching Parshav's exact writing style.
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-bold">Offline Mock Notice:</span> Your Gemini API Key is waiting to be configured in your Secrets panel. We have simulated Parshav's exact voice utilizing pre-built heuristics for you.
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

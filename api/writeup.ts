@@ -31,6 +31,19 @@ function isObjectiveTopic(topic: string): boolean {
   return false;
 }
 
+function getMockWriteup(topic: string, isObj: boolean, isShortTopic: boolean): string {
+  if (isObj) {
+    if (topic.toLowerCase().includes('temperature')) {
+      return "Temperature is a measure of standard hotness or coldness.";
+    }
+    return `Fact: ${topic.replace(/\?$/, '')} represents the standard physical measurement.`;
+  }
+  if (isShortTopic) {
+    return `Honestly, ${topic} is one of those simple everyday things we over-complicate. Yaar, dekho, no need for fancy presentations here. Keep it real, keep it simple, and focus on execution. Why spend hours parsing theory? Let's just deal with it and move forward.`;
+  }
+  return `Most people treat ${topic} like some theoretical masterclass. Yaar, that's just laziness. If Nykaa or CRED waited for a perfect playbook, they'd still be in a PowerPoint slide. Let's build real things instead.\n\nCricket teaches you that you can't hit a six on a pitch you haven't stepped onto. You have to face the bouncers, play the shot, and learn on the fly. So what? Skip the jargon. Pick a metric that actually moves the needle, launch it by Tuesday, and let the market tell you if you're out or safe.\n\nThe clock is ticking, aur suno, are you ready to act or are we just play-acting?`;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Setup CORS Headers for API-friendliness
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -78,28 +91,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })();
 
     if (!hasValidKey) {
-      if (isObj) {
-        if (topic.toLowerCase().includes('temperature')) {
-          return res.status(200).json({
-            writeup: "Temperature is a measure of standard hotness or coldness.", // 9 words
-            isMock: true
-          });
-        }
-        return res.status(200).json({
-          writeup: `Fact: ${topic.replace(/\?$/, '')} represents the standard physical measurement.`, // 8-10 words
-          isMock: true
-        });
-      }
-
-      if (isShortTopic) {
-        return res.status(200).json({
-          writeup: `Honestly, ${topic} is one of those simple everyday things we over-complicate. Yaar, dekho, no need for fancy presentations here. Keep it real, keep it simple, and focus on execution. Why spend hours parsing theory? Let's just deal with it and move forward.`,
-          isMock: true
-        });
-      }
-      // API Offline mock response (consistent with local dev)
       return res.status(200).json({
-        writeup: `Most people treat ${topic} like some theoretical masterclass. Yaar, that's just laziness. If Nykaa or CRED waited for a perfect playbook, they'd still be in a PowerPoint slide. Let's build real things instead.\n\nCricket teaches you that you can't hit a six on a pitch you haven't stepped onto. You have to face the bouncers, play the shot, and learn on the fly. So what? Skip the jargon. Pick a metric that actually moves the needle, launch it by Tuesday, and let the market tell you if you're out or safe.\n\nThe clock is ticking, aur suno, are you ready to act or are we just play-acting?`,
+        writeup: getMockWriteup(topic, isObj, isShortTopic),
         isMock: true
       });
     }
@@ -177,18 +170,18 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
     } catch (err25: any) {
       const errMsg = String(err25?.message || '').toLowerCase();
       if (err25?.status === 503 || msgIsTransient(errMsg)) {
-        console.warn("gemini-2.5-flash is temporarily overloaded. Retrying on gemini-1.5-flash...");
+        console.warn("gemini-2.5-flash is temporarily overloaded. Retrying on gemini-2.0-flash...");
         try {
           response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.0-flash",
             contents: systemPrompt,
             config: {
               temperature: 0.88,
               ...(isObj ? { tools: [{ googleSearch: {} }] } : {})
             }
           });
-        } catch (err15: any) {
-          throw err15;
+        } catch (err20: any) {
+          throw err20;
         }
       } else {
         throw err25;
@@ -209,6 +202,10 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
 
   } catch (err: any) {
     console.error('Vercel serverless writeup error:', err);
-    return res.status(500).json({ error: err.message || 'Generation failed' });
+    return res.status(200).json({
+      writeup: getMockWriteup(topic, isObj, isShortTopic),
+      isMock: true,
+      apiError: err.message || 'Generation failed'
+    });
   }
 }

@@ -239,13 +239,17 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
     }
   });
 
-  // API Route for Text-to-Speech using Murf AI (Delhi en-IN-samar Voice Model)
+  // API Route for Text-to-Speech using Murf AI
   app.post("/api/tts", async (req, res) => {
     try {
-      const { text } = req.body;
+      const { text, voiceId, style, model } = req.body;
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text parameter is required for speech synthesis." });
       }
+
+      const activeVoiceId = voiceId || 'en-IN-samar';
+      const activeStyle = style || 'Conversational';
+      const activeModel = model || 'Falcon';
 
       // Try reading Murf API Key from headers (UI key inputs), fallback to environment variables
       const headerMurfKey = req.headers['x-murf-api-key'];
@@ -297,7 +301,7 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
         });
       }
 
-      // 2. Generate speech stream with specified voice parameters: Samar (en-IN-samar), Conversational, Falcon
+      // 2. Generate speech stream with specified voice parameters
       const generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
         method: 'POST',
         headers: {
@@ -305,12 +309,12 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
           'token': authToken,
         },
         body: JSON.stringify({
-          voiceId: 'en-IN-samar',
-          voice_id: 'en-IN-samar',
+          voiceId: activeVoiceId,
+          voice_id: activeVoiceId,
           text: text,
-          style: 'Conversational',
-          model: 'Falcon',
-          "model:": 'Falcon'
+          style: activeStyle,
+          model: activeModel,
+          "model:": activeModel
         })
       });
 

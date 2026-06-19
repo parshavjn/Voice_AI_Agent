@@ -26,6 +26,9 @@ export default function App() {
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [murfApiKey, setMurfApiKey] = useState(() => localStorage.getItem('murf_api_key') || '');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [murfVoiceId, setMurfVoiceId] = useState(() => localStorage.getItem('murf_voice_id') || 'Samar');
+  const [murfStyle, setMurfStyle] = useState(() => localStorage.getItem('murf_style') || 'Conversational');
+  const [murfModel, setMurfModel] = useState(() => localStorage.getItem('murf_model') || 'Falcon');
   
   const [recentGenerations, setRecentGenerations] = useState<Array<{ topic: string, writeup: string, date: string }>>([
     {
@@ -101,6 +104,9 @@ export default function App() {
         body: JSON.stringify({
           text: writeup,
           voiceName: selectedVoice,
+          voiceId: murfVoiceId,
+          style: murfStyle,
+          model: murfModel,
         }),
       });
 
@@ -563,8 +569,67 @@ export default function App() {
                   className="w-full p-3 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:border-transparent font-mono"
                 />
                 <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                  Provide your Murf API Key to generate speech using the authentic, premium en-IN-samar voice.
+                  Provide your Murf API Key to generate speech using the authentic, premium voice.
                 </p>
+              </div>
+
+              <div className="border-t border-slate-100 pt-4 mt-2">
+                <h4 className="text-xs font-bold text-slate-900 mb-3 flex items-center gap-1">
+                  <span>Voice Settings</span>
+                </h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Voice ID
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Samar"
+                      value={murfVoiceId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setMurfVoiceId(val);
+                        localStorage.setItem('murf_voice_id', val);
+                      }}
+                      className="w-full p-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:border-transparent font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Voice Model
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Falcon"
+                      value={murfModel}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setMurfModel(val);
+                        localStorage.setItem('murf_model', val);
+                      }}
+                      className="w-full p-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:border-transparent font-medium"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Voice Style
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Conversational"
+                      value={murfStyle}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setMurfStyle(val);
+                        localStorage.setItem('murf_style', val);
+                      }}
+                      className="w-full p-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:border-transparent font-medium"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

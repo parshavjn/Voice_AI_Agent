@@ -15,10 +15,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { text } = req.body || {};
+    const { text, voiceId, style, model } = req.body || {};
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Text parameter is required for TTS.' });
     }
+
+    const activeVoiceId = voiceId || 'Samar';
+    const activeStyle = style || 'Conversational';
+    const activeModel = model || 'Falcon';
 
     // Try reading Murf API Key from headers (UI key inputs), fallback to environment variables
     const headerMurfKey = req.headers['x-murf-api-key'];
@@ -70,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 2. Generate speech stream with specified voice parameters: Samar (en-IN-samar), Conversational, Falcon
+    // 2. Generate speech stream with specified voice parameters
     const generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
       method: 'POST',
       headers: {
@@ -78,12 +82,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'token': authToken,
       },
       body: JSON.stringify({
-        voiceId: 'en-IN-samar',
-        voice_id: 'en-IN-samar',
+        voiceId: activeVoiceId,
+        voice_id: activeVoiceId,
         text: text,
-        style: 'Conversational',
-        model: 'Falcon',
-        "model:": 'Falcon'
+        style: activeStyle,
+        model: activeModel,
+        "model:": activeModel
       })
     });
 

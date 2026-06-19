@@ -24,6 +24,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const activeStyle = style || 'Conversational';
     const activeModel = model || 'GEN2';
 
+    const isFalcon = activeModel.toLowerCase().includes('falcon');
+    const finalVoiceId = (!isFalcon && activeVoiceId === 'Samar') ? 'en-IN-samar' : activeVoiceId;
+
     // Try reading Murf API Key from headers (UI key inputs), fallback to environment variables
     const headerMurfKey = req.headers['x-murf-api-key'];
     let murfApiKey = typeof headerMurfKey === 'string' ? headerMurfKey.trim() : '';
@@ -75,7 +78,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2. Generate speech stream with specified voice parameters
     let generateResponse;
-    const isFalcon = activeModel.toLowerCase().includes('falcon');
 
     if (isFalcon) {
       generateResponse = await fetch('https://api.murf.ai/v1/speech/stream', {
@@ -85,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'token': authToken,
         },
         body: JSON.stringify({
-          voiceId: activeVoiceId,
+          voiceId: finalVoiceId,
           text: text,
           model: activeModel.toLowerCase() === 'falcon' ? 'falcon-2' : activeModel
         })
@@ -98,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'token': authToken,
         },
         body: JSON.stringify({
-          voiceId: activeVoiceId,
+          voiceId: finalVoiceId,
           text: text,
           style: activeStyle,
           modelVersion: activeModel

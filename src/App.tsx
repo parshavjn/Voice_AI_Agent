@@ -347,11 +347,11 @@ export default function App() {
           {/* Logo & Identity info as per style rules */}
           <div className="flex items-center gap-3.5">
             <div className="h-11 w-11 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black tracking-tight text-xl shadow-md border border-slate-800">
-              P
+              A
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold font-display text-slate-900 tracking-tight">Parshav's Voice Skill</h1>
+                <h1 className="text-xl font-bold font-display text-slate-900 tracking-tight">My AI personal Assistant</h1>
                 <span className="text-[10px] bg-rose-50 border border-rose-200 text-rose-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">
                   AI Personal Clone
                 </span>
@@ -609,7 +609,7 @@ export default function App() {
       {/* Elegant minimalist footer */}
       <footer className="bg-white border-t border-slate-200 py-6 px-6 mt-12 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto">
-          <span>© 2026 Parshav Jain AI Voice Assistant — All rights preserved.</span>
+          <span>© 2026 My AI personal Assistant — All rights preserved.</span>
         </div>
       </footer>
 

@@ -111,10 +111,11 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error('FallbackToBrowser');
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || `Server returned error status: ${response.status}`);
       }
 
-      const runBrowserSpeechFallback = (textToSpeak: string) => {
+      const runBrowserSpeechFallback = (textToSpeak: string, specificError?: string) => {
         if ('speechSynthesis' in window) {
           console.log('Running Web Speech API local fallback...');
           window.speechSynthesis.cancel();
@@ -144,30 +145,29 @@ export default function App() {
             pause: () => window.speechSynthesis.cancel()
           } as any;
           
-          setAudioError("Playing via local Browser Text-to-Speech fallback.");
+          setAudioError(specificError ? `TTS Fallback: ${specificError}` : "Playing via local Browser Text-to-Speech fallback.");
         } else {
-          setAudioError('Speech synthesis failed. Please try on Google Chrome/Safari or check your API Key.');
+          setAudioError(specificError ? `TTS Failed: ${specificError}` : 'Speech synthesis failed. Please try on Google Chrome/Safari or check your API Key.');
           setIsListening(false);
         }
       };
 
       const data = await response.json();
-      if (data.base64Audio) {
+      const playUrl = data.audioUrl || (data.base64Audio ? `data:audio/mp3;base64,${data.base64Audio}` : null);
+      
+      if (playUrl) {
         // Clear any prior local speech synthesizer
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
         }
 
-        // Try utilizing audio/wav first, as returned by Gemini TTS, or fall back to audio/mp3 on error
-        const audioSrc = `data:audio/wav;base64,${data.base64Audio}`;
-        
         if (audioRef.current && typeof audioRef.current.pause === 'function') {
           try {
             audioRef.current.pause();
           } catch {}
         }
 
-        const audio = new Audio(audioSrc);
+        const audio = new Audio(playUrl);
         audioRef.current = audio;
 
         audio.onended = () => {
@@ -175,31 +175,21 @@ export default function App() {
         };
 
         audio.onerror = (e) => {
-          console.warn("WAV stream decode failed. Trying MP3 stream decoding...", e);
-          try {
-            const fallbackSrc = `data:audio/mp3;base64,${data.base64Audio}`;
-            const fallbackAudio = new Audio(fallbackSrc);
-            audioRef.current = fallbackAudio;
-            fallbackAudio.onended = () => setIsListening(false);
-            fallbackAudio.onerror = () => {
-              runBrowserSpeechFallback(writeup);
-            };
-            fallbackAudio.play().catch(() => {
-              runBrowserSpeechFallback(writeup);
-            });
-          } catch {
-            runBrowserSpeechFallback(writeup);
-          }
+          console.error("Audio playback/decode failed:", e);
+          runBrowserSpeechFallback(writeup, "Audio playback/decode failed");
         };
 
         audio.play().catch((playErr) => {
           console.warn("Direct play blocked by browser autoplay rules. Running local TTS fallback.", playErr);
-          runBrowserSpeechFallback(writeup);
+          runBrowserSpeechFallback(writeup, "Direct play blocked by browser");
         });
       } else {
-        runBrowserSpeechFallback(writeup);
+        runBrowserSpeechFallback(writeup, "No audio URL or base64 data returned from server");
       }
     } catch (error: any) {
+      console.error("TTS Synthesis Error:", error);
+      const errMsg = error.message || "Failed to load audio resource.";
+      
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         
@@ -228,10 +218,9 @@ export default function App() {
           pause: () => window.speechSynthesis.cancel()
         } as any;
         
-        setAudioError("Playing via Browser Text-to-Speech (Instant Local Fallback)");
+        setAudioError(`TTS Error: ${errMsg}. Running local fallback.`);
       } else {
-        console.error(error);
-        setAudioError('Speech synthesis failed. Please make sure your browser supports local SpeechSynthesis.');
+        setAudioError(`TTS Failed: ${errMsg}`);
         setIsListening(false);
       }
     }

@@ -247,7 +247,7 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
         return res.status(400).json({ error: "Text parameter is required for speech synthesis." });
       }
 
-      const activeVoiceId = voiceId || 'en-IN-samar';
+      const activeVoiceId = voiceId || 'Samar';
       const activeStyle = style || 'Conversational';
       const activeModel = model || 'Falcon';
 

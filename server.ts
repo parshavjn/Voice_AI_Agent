@@ -301,19 +301,37 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
       }
 
       // 2. Generate speech stream with specified voice parameters
-      const generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'token': authToken,
-        },
-        body: JSON.stringify({
-          voiceId: activeVoiceId,
-          text: text,
-          style: activeStyle,
-          modelVersion: activeModel
-        })
-      });
+      let generateResponse;
+      const isFalcon = activeModel.toLowerCase().includes('falcon');
+
+      if (isFalcon) {
+        generateResponse = await fetch('https://api.murf.ai/v1/speech/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'token': authToken,
+          },
+          body: JSON.stringify({
+            voiceId: activeVoiceId,
+            text: text,
+            model: activeModel.toLowerCase() === 'falcon' ? 'falcon-2' : activeModel
+          })
+        });
+      } else {
+        generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'token': authToken,
+          },
+          body: JSON.stringify({
+            voiceId: activeVoiceId,
+            text: text,
+            style: activeStyle,
+            modelVersion: activeModel
+          })
+        });
+      }
 
       if (!generateResponse.ok) {
         const errBody = await generateResponse.text();
@@ -322,22 +340,30 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
         });
       }
 
-      const generateData = await generateResponse.json();
-      const audioUrl = generateData.audioUrl || generateData.audio_url || generateData.url;
-      if (!audioUrl) {
-        return res.status(502).json({ 
-          error: `No audio URL returned from Murf speech synthesis.` 
-        });
-      }
+      let base64Audio = '';
+      let audioUrl = '';
 
-      // 3. Download the audio file and convert it into base64 to keep client compatibility
-      const fileResponse = await fetch(audioUrl);
-      if (!fileResponse.ok) {
-        return res.status(502).json({ error: `Failed to download audio resource: ${audioUrl}` });
-      }
+      if (isFalcon) {
+        const arrayBuffer = await generateResponse.arrayBuffer();
+        base64Audio = Buffer.from(arrayBuffer).toString('base64');
+      } else {
+        const generateData = await generateResponse.json();
+        audioUrl = generateData.audioUrl || generateData.audio_url || generateData.url;
+        if (!audioUrl) {
+          return res.status(502).json({ 
+            error: `No audio URL returned from Murf speech synthesis.` 
+          });
+        }
 
-      const arrayBuffer = await fileResponse.arrayBuffer();
-      const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+        // Download the audio file and convert it into base64 to keep client compatibility
+        const fileResponse = await fetch(audioUrl);
+        if (!fileResponse.ok) {
+          return res.status(502).json({ error: `Failed to download audio resource: ${audioUrl}` });
+        }
+
+        const arrayBuffer = await fileResponse.arrayBuffer();
+        base64Audio = Buffer.from(arrayBuffer).toString('base64');
+      }
 
       res.json({ base64Audio, audioUrl });
     } catch (err: any) {

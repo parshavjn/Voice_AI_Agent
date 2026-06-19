@@ -44,6 +44,41 @@ export default function App() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Load saved keys from backend if present on mount
+  React.useEffect(() => {
+    fetch('/api/get-keys')
+      .then(res => res.json())
+      .then(data => {
+        if (data.geminiApiKey && !geminiApiKey) {
+          setGeminiApiKey(data.geminiApiKey);
+          localStorage.setItem('gemini_api_key', data.geminiApiKey);
+        }
+        if (data.murfApiKey && !murfApiKey) {
+          setMurfApiKey(data.murfApiKey);
+          localStorage.setItem('murf_api_key', data.murfApiKey);
+        }
+      })
+      .catch(err => console.error("Error loading keys from server:", err));
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setIsSettingsOpen(false);
+    try {
+      await fetch('/api/save-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          geminiApiKey,
+          murfApiKey
+        })
+      });
+    } catch (err) {
+      console.error("Failed to save keys to server:", err);
+    }
+  };
+
   // Run generation
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -690,7 +725,7 @@ export default function App() {
 
             <div className="mt-6 flex justify-end">
               <button
-                onClick={() => setIsSettingsOpen(false)}
+                onClick={handleSaveSettings}
                 className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-all cursor-pointer"
               >
                 Save & Close

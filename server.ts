@@ -387,6 +387,39 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
     }
   });
 
+  // API Route to save keys to server .env
+  app.post("/api/save-keys", async (req, res) => {
+    try {
+      const { geminiApiKey, murfApiKey } = req.body;
+      const fs = await import("fs");
+      const path = await import("path");
+      
+      let envContent = "";
+      if (geminiApiKey) {
+        envContent += `GEMINI_API_KEY="${geminiApiKey}"\n`;
+        process.env.GEMINI_API_KEY = geminiApiKey;
+      }
+      if (murfApiKey) {
+        envContent += `MURF_API_KEY="${murfApiKey}"\n`;
+        process.env.MURF_API_KEY = murfApiKey;
+      }
+      
+      fs.writeFileSync(path.join(process.cwd(), ".env"), envContent);
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Failed to save keys to .env:", err);
+      res.status(500).json({ error: err.message || "Failed to save keys." });
+    }
+  });
+
+  // API Route to retrieve server-configured keys on startup
+  app.get("/api/get-keys", (req, res) => {
+    res.json({
+      geminiApiKey: process.env.GEMINI_API_KEY || "",
+      murfApiKey: process.env.MURF_API_KEY || ""
+    });
+  });
+
   // Handle Vite middleware
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

@@ -57,7 +57,19 @@ async function startServer() {
 
   // Initialize Gemini
   const apiKey = process.env.GEMINI_API_KEY;
-  const hasValidKey = typeof apiKey === 'string' && apiKey.trim().replace(/^['"]|['"]$/g, '').startsWith('AIzaSy');
+  const hasValidKey = (() => {
+    if (!apiKey) return false;
+    const k = apiKey.trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+    return (
+      k !== "" &&
+      k !== "my_gemini_api_key" &&
+      k !== "your_gemini_api_key" &&
+      k !== "mock_key" &&
+      k !== "undefined" &&
+      k !== "null" &&
+      !k.includes("placeholder")
+    );
+  })();
 
   if (!hasValidKey) {
     console.warn("WARNING: GEMINI_API_KEY environment variable is not configured or is a placeholder. Rich mock offline models will be used automatically.");
@@ -91,7 +103,19 @@ async function startServer() {
         activeApiKey = (process.env.GEMINI_API_KEY || '').trim();
       }
 
-      const isKeyActive = typeof activeApiKey === 'string' && activeApiKey.trim().replace(/^['"]|['"]$/g, '').startsWith('AIzaSy');
+      const isKeyActive = (() => {
+        if (!activeApiKey) return false;
+        const k = activeApiKey.trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+        return (
+          k !== "" &&
+          k !== "my_gemini_api_key" &&
+          k !== "your_gemini_api_key" &&
+          k !== "mock_key" &&
+          k !== "undefined" &&
+          k !== "null" &&
+          !k.includes("placeholder")
+        );
+      })();
 
       if (!isKeyActive) {
         return res.json({

@@ -171,6 +171,7 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
         contents: systemPrompt,
         config: {
           temperature: 0.88,
+          ...(isObj ? { tools: [{ googleSearch: {} }] } : {})
         }
       });
     } catch (err25: any) {
@@ -183,6 +184,7 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
             contents: systemPrompt,
             config: {
               temperature: 0.88,
+              ...(isObj ? { tools: [{ googleSearch: {} }] } : {})
             }
           });
         } catch (err15: any) {

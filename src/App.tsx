@@ -10,7 +10,8 @@ import {
   Flame, 
   VolumeX, 
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  Settings
 } from 'lucide-react';
 
 export default function App() {
@@ -22,6 +23,9 @@ export default function App() {
   const [selectedVoice] = useState<'Samar'>('Samar');
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isMockResponse, setIsMockResponse] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [murfApiKey, setMurfApiKey] = useState(() => localStorage.getItem('murf_api_key') || '');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const [recentGenerations, setRecentGenerations] = useState<Array<{ topic: string, writeup: string, date: string }>>([
     {
@@ -52,6 +56,7 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {}),
         },
         body: JSON.stringify({
           topic: topic,
@@ -91,6 +96,7 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(murfApiKey ? { 'x-murf-api-key': murfApiKey } : {}),
         },
         body: JSON.stringify({
           text: writeup,
@@ -263,6 +269,16 @@ export default function App() {
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition shadow-2xs bg-white cursor-pointer"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              <span>⚙️ API Keys Setup</span>
+            </button>
           </div>
 
         </div>
@@ -500,6 +516,69 @@ export default function App() {
           <span>© 2026 Parshav Jain AI Voice Assistant — All rights preserved.</span>
         </div>
       </footer>
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full shadow-2xl p-6 relative animate-scale-up">
+            <h3 className="text-sm font-bold text-slate-950 mb-4 flex items-center gap-2">
+              <Settings className="h-4 w-4 text-slate-700" />
+              ⚙️ API Configuration Settings
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Gemini API Key
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter Gemini API Key"
+                  value={geminiApiKey}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setGeminiApiKey(val);
+                    localStorage.setItem('gemini_api_key', val);
+                  }}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:border-transparent font-mono"
+                />
+                <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                  Provide your own Gemini API Key to enable live queries (Google Search grounding is enabled for factual questions).
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Murf.ai API Key
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter Murf.ai API Key"
+                  value={murfApiKey}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMurfApiKey(val);
+                    localStorage.setItem('murf_api_key', val);
+                  }}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:border-transparent font-mono"
+                />
+                <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                  Provide your Murf API Key to generate speech using the authentic, premium en-IN-samar voice.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Save & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

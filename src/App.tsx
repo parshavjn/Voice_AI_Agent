@@ -157,9 +157,9 @@ export default function App() {
       };
 
       const data = await response.json();
-      const playUrl = data.audioUrl || (data.base64Audio ? `data:audio/mp3;base64,${data.base64Audio}` : null);
-      
-      if (playUrl) {
+      const chunks = data.audioChunks || (data.base64Audio ? [data.base64Audio] : []);
+
+      if (chunks.length > 0) {
         // Clear any prior local speech synthesizer
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
@@ -171,7 +171,58 @@ export default function App() {
           } catch {}
         }
 
-        const audio = new Audio(playUrl);
+        let currentIndex = 0;
+        let stopped = false;
+        
+        const playNextChunk = () => {
+          if (currentIndex >= chunks.length || stopped) {
+            setIsListening(false);
+            return;
+          }
+
+          const base64 = chunks[currentIndex];
+          const audioSrc = `data:audio/mp3;base64,${base64}`;
+          const audio = new Audio(audioSrc);
+          
+          audioRef.current = {
+            pause: () => {
+              stopped = true;
+              audio.pause();
+            }
+          } as any;
+
+          audio.onended = () => {
+            if (stopped) return;
+            currentIndex++;
+            playNextChunk();
+          };
+
+          audio.onerror = (e) => {
+            console.error(`Audio chunk ${currentIndex} playback/decode failed:`, e);
+            if (stopped) return;
+            currentIndex++;
+            playNextChunk();
+          };
+
+          audio.play().catch((playErr) => {
+            console.warn("Direct play blocked by browser autoplay rules.", playErr);
+            runBrowserSpeechFallback(writeup, "Direct play blocked by browser");
+          });
+        };
+
+        playNextChunk();
+      } else if (data.audioUrl) {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+
+        if (audioRef.current && typeof audioRef.current.pause === 'function') {
+          try {
+            audioRef.current.pause();
+          } catch {}
+        }
+
+        const audio = new Audio(data.audioUrl);
         audioRef.current = audio;
 
         audio.onended = () => {
@@ -179,7 +230,7 @@ export default function App() {
         };
 
         audio.onerror = (e) => {
-          console.error("Audio playback/decode failed:", e);
+          console.error("Audio url playback/decode failed:", e);
           runBrowserSpeechFallback(writeup, "Audio playback/decode failed");
         };
 

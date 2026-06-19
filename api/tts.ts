@@ -79,21 +79,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2. Generate speech stream with specified voice parameters
     let generateResponse;
 
+    // 2. Generate speech stream with specified voice parameters
+    let audioChunks: string[] = [];
+    let audioUrl = '';
+
     if (isFalcon) {
-      generateResponse = await fetch('https://api.murf.ai/v1/speech/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'token': authToken,
-        },
-        body: JSON.stringify({
-          voiceId: finalVoiceId,
-          text: text,
-          model: activeModel.toLowerCase() === 'falcon' ? 'falcon-2' : activeModel
-        })
+      const splitIntoSentences = (t: string): string[] => {
+        const matches = t.match(/[^.!?]+([.!?]+|$)/g) || [t];
+        return matches.map(s => s.trim()).filter(s => s.length > 2);
+      };
+
+      const sentences = splitIntoSentences(text);
+      const promises = sentences.map(async (sentence) => {
+        const res = await fetch('https://api.murf.ai/v1/speech/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'token': authToken,
+          },
+          body: JSON.stringify({
+            voiceId: finalVoiceId,
+            text: sentence,
+            model: activeModel.toLowerCase() === 'falcon' ? 'falcon-2' : activeModel
+          })
+        });
+
+        if (!res.ok) {
+          const errMsg = await res.text();
+          throw new Error(errMsg || `Status ${res.status}`);
+        }
+
+        const buf = await res.arrayBuffer();
+        return Buffer.from(buf).toString('base64');
       });
+
+      audioChunks = await Promise.all(promises);
     } else {
-      generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
+      const generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,22 +128,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           modelVersion: activeModel
         })
       });
-    }
 
-    if (!generateResponse.ok) {
-      const errBody = await generateResponse.text();
-      return res.status(generateResponse.status).json({ 
-        error: `Murf generation failed: ${errBody}` 
-      });
-    }
+      if (!generateResponse.ok) {
+        const errBody = await generateResponse.text();
+        return res.status(generateResponse.status).json({ 
+          error: `Murf generation failed: ${errBody}` 
+        });
+      }
 
-    let base64Audio = '';
-    let audioUrl = '';
-
-    if (isFalcon) {
-      const arrayBuffer = await generateResponse.arrayBuffer();
-      base64Audio = Buffer.from(arrayBuffer).toString('base64');
-    } else {
       const generateData = await generateResponse.json();
       audioUrl = generateData.audioUrl || generateData.audio_url || generateData.url;
       if (!audioUrl) {
@@ -137,10 +151,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const arrayBuffer = await fileResponse.arrayBuffer();
-      base64Audio = Buffer.from(arrayBuffer).toString('base64');
+      const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+      audioChunks = [base64Audio];
     }
 
-    return res.status(200).json({ base64Audio, audioUrl });
+    return res.status(200).json({ audioChunks, base64Audio: audioChunks[0] || '', audioUrl });
 
   } catch (err: any) {
     console.error('Vercel serverless tts error:', err);

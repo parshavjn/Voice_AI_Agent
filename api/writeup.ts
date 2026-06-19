@@ -167,26 +167,17 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
     let response;
     try {
       response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: systemPrompt,
         config: {
           temperature: 0.88,
         }
       });
-    } catch (err35: any) {
-      const errMsg = String(err35?.message || '').toLowerCase();
-      if (err35?.status === 503 || msgIsTransient(errMsg)) {
-        console.warn("gemini-3.5-flash is temporarily overloaded. Retrying on gemini-2.5-flash...");
+    } catch (err25: any) {
+      const errMsg = String(err25?.message || '').toLowerCase();
+      if (err25?.status === 503 || msgIsTransient(errMsg)) {
+        console.warn("gemini-2.5-flash is temporarily overloaded. Retrying on gemini-1.5-flash...");
         try {
-          response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: systemPrompt,
-            config: {
-              temperature: 0.88,
-            }
-          });
-        } catch (err25: any) {
-          console.warn("gemini-2.5-flash failed too. Trying stable gemini-1.5-flash...");
           response = await ai.models.generateContent({
             model: "gemini-1.5-flash",
             contents: systemPrompt,
@@ -194,9 +185,11 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
               temperature: 0.88,
             }
           });
+        } catch (err15: any) {
+          throw err15;
         }
       } else {
-        throw err35;
+        throw err25;
       }
     }
 

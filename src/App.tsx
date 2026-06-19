@@ -28,7 +28,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [murfVoiceId, setMurfVoiceId] = useState(() => localStorage.getItem('murf_voice_id') || 'Samar');
   const [murfStyle, setMurfStyle] = useState(() => localStorage.getItem('murf_style') || 'Conversational');
-  const [murfModel, setMurfModel] = useState(() => localStorage.getItem('murf_model') || 'Falcon');
+  const [murfModel, setMurfModel] = useState(() => localStorage.getItem('murf_model') || 'GEN2');
   
   const [recentGenerations, setRecentGenerations] = useState<Array<{ topic: string, writeup: string, date: string }>>([
     {

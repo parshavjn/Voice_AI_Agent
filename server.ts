@@ -249,7 +249,7 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
 
       const activeVoiceId = voiceId || 'Samar';
       const activeStyle = style || 'Conversational';
-      const activeModel = model || 'Falcon';
+      const activeModel = model || 'GEN2';
 
       // Try reading Murf API Key from headers (UI key inputs), fallback to environment variables
       const headerMurfKey = req.headers['x-murf-api-key'];

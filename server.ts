@@ -309,11 +309,9 @@ ${customInstructions ? `Additional Context/Vibe check: ${customInstructions}` : 
         },
         body: JSON.stringify({
           voiceId: activeVoiceId,
-          voice_id: activeVoiceId,
           text: text,
           style: activeStyle,
-          model: activeModel,
-          "model:": activeModel
+          modelVersion: activeModel
         })
       });
 

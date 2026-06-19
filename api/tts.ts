@@ -82,11 +82,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         voiceId: activeVoiceId,
-        voice_id: activeVoiceId,
         text: text,
         style: activeStyle,
-        model: activeModel,
-        "model:": activeModel
+        modelVersion: activeModel
       })
     });
 

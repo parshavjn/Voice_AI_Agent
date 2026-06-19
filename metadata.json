@@ -1,0 +1,6 @@
+{
+  "name": "Parshav's Voice Skill Assistant",
+  "description": "Writes short personal write-ups in Parshav's quick, punchy, Delhi NCR PM voice and style.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

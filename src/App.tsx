@@ -68,7 +68,8 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error('Server returned an error. Make sure your GEMINI_API_KEY is configured.');
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Server returned an error.');
       }
 
       const data = await response.json();

@@ -95,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
 
       const sentences = splitIntoSentences(text);
-      const promises = sentences.map(async (sentence) => {
+      for (const sentence of sentences) {
         const res = await fetch('https://api.murf.ai/v1/speech/stream', {
           method: 'POST',
           headers: {
@@ -115,10 +115,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const buf = await res.arrayBuffer();
-        return Buffer.from(buf).toString('base64');
-      });
-
-      audioChunks = await Promise.all(promises);
+        audioChunks.push(Buffer.from(buf).toString('base64'));
+      }
     } else {
       const generateResponse = await fetch('https://api.murf.ai/v1/speech/generate', {
         method: 'POST',

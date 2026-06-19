@@ -24,8 +24,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const activeStyle = style || 'Conversational';
     const activeModel = model || 'GEN2';
 
-    const isFalcon = activeModel.toLowerCase().includes('falcon');
-    const finalVoiceId = (!isFalcon && activeVoiceId === 'Samar') ? 'en-IN-samar' : activeVoiceId;
+    const finalVoiceId = activeVoiceId === 'Samar' ? 'en-IN-samar' : activeVoiceId;
+    const isFalcon = activeModel.toLowerCase().includes('falcon') || finalVoiceId === 'en-IN-samar';
+    const finalModel = isFalcon 
+      ? (activeModel.toLowerCase().includes('falcon') 
+          ? (activeModel.toLowerCase() === 'falcon' ? 'falcon-2' : activeModel) 
+          : 'falcon-2')
+      : activeModel;
 
     // Try reading Murf API Key from headers (UI key inputs), fallback to environment variables
     const headerMurfKey = req.headers['x-murf-api-key'];
@@ -100,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           body: JSON.stringify({
             voiceId: finalVoiceId,
             text: sentence,
-            model: activeModel.toLowerCase() === 'falcon' ? 'falcon-2' : activeModel
+            model: finalModel
           })
         });
 
@@ -125,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           voiceId: finalVoiceId,
           text: text,
           style: activeStyle,
-          modelVersion: activeModel
+          modelVersion: finalModel
         })
       });
 
